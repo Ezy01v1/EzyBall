@@ -1,0 +1,51 @@
+rules_version = '2';
+
+// Reglas de seguridad de Firestore para EzyBall.
+//
+// Desplegar con:  firebase deploy --only firestore:rules
+//
+// Principio: las claves de Firebase que viajan en la app son publicas por
+// diseno. La seguridad real vive aqui, no en ocultar el apiKey.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Biblioteca de tips -------------------------------------------------
+    // Lectura publica de contenido ya revisado y publicado. La escritura se
+    // hace desde el script de seed con credenciales de administrador, que se
+    // saltan estas reglas: por eso aqui la escritura esta cerrada del todo.
+    match /tips/{tipId} {
+      allow read: if resource.data.publicado == true;
+      allow write: if false;
+    }
+
+    // --- Datos del usuario --------------------------------------------------
+    match /usuarios/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+
+      // Sesiones de entrenamiento. Solo eventos derivados: nunca video.
+      match /sesiones/{sesionId} {
+        allow read, delete: if request.auth != null && request.auth.uid == uid;
+
+        allow create, update: if request.auth != null
+          && request.auth.uid == uid
+          && sesionValida(request.resource.data);
+      }
+    }
+
+    function sesionValida(data) {
+      return data.keys().hasAll(['id', 'usuarioId', 'fecha', 'duracion', 'tiros', 'resumen'])
+        && data.usuarioId == request.auth.uid
+        && data.duracion is int
+        && data.duracion >= 0
+        && data.tiros is list
+        // Tope defensivo: una sesion legitima no llega a 2000 tiros, y evita
+        // que un cliente manipulado infle el documento hasta el limite de 1 MB.
+        && data.tiros.size() <= 2000;
+    }
+
+    // Todo lo no contemplado, denegado.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

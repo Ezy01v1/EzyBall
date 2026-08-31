@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Login - EzyBall</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&amp;family=JetBrains+Mono:wght@400;600;700&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#e5e2e1",
+                        "on-primary-fixed": "#351000",
+                        "surface-container-high": "#2a2a2a",
+                        "primary-container": "#ff6b00",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary-container": "#ffd2cc",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#a04100",
+                        "tertiary": "#acc7ff",
+                        "on-tertiary-container": "#003068",
+                        "on-error": "#690005",
+                        "surface-dim": "#131313",
+                        "secondary-container": "#c5020b",
+                        "secondary": "#ffb4aa",
+                        "on-primary": "#561f00",
+                        "on-secondary": "#690003",
+                        "on-secondary-fixed": "#410001",
+                        "on-tertiary": "#002f67",
+                        "secondary-fixed-dim": "#ffb4aa",
+                        "on-tertiary-fixed": "#001a40",
+                        "tertiary-container": "#5a98ff",
+                        "tertiary-fixed-dim": "#acc7ff",
+                        "on-background": "#e5e2e1",
+                        "on-surface-variant": "#e2bfb0",
+                        "outline-variant": "#5a4136",
+                        "secondary-fixed": "#ffdad5",
+                        "surface-container-lowest": "#0e0e0e",
+                        "error": "#ffb4ab",
+                        "primary": "#ffb693",
+                        "on-secondary-fixed-variant": "#930005",
+                        "background": "#131313",
+                        "surface-bright": "#393939",
+                        "surface": "#131313",
+                        "surface-container-highest": "#353534",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-container": "#572000",
+                        "surface-container": "#201f1f",
+                        "surface-tint": "#ffb693",
+                        "tertiary-fixed": "#d7e2ff",
+                        "outline": "#a98a7d",
+                        "surface-variant": "#353534",
+                        "on-tertiary-fixed-variant": "#004591",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed": "#ffdbcc",
+                        "primary-fixed-dim": "#ffb693",
+                        "inverse-on-surface": "#313030"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter-mobile": "12px",
+                        "lg": "24px",
+                        "base": "4px",
+                        "xl": "40px",
+                        "margin-mobile": "20px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Manrope"],
+                        "headline-lg-mobile": ["Anybody"],
+                        "label-caps": ["JetBrains Mono"],
+                        "stats-num": ["Anybody"],
+                        "headline-lg": ["Anybody"],
+                        "body-lg": ["Manrope"],
+                        "display-lg": ["Anybody"],
+                        "headline-md": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "stats-num": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md text-body-md h-screen flex flex-col items-center justify-center p-margin-mobile">
+<main class="w-full max-w-md flex flex-col items-center gap-xl">
+<!-- Brand Logo -->
+<div class="flex flex-col items-center gap-sm">
+<img alt="EzyBall Logo" class="w-32 h-32 object-contain rounded-lg" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAZ9UnJhWSKA4v3Wy2zJ3_7bwvZSQZKa6IMlaAmgafRQHQrKO8-PHckgQLCETdSvRjL6NZj_vxeClfw54AgATGe-h1M0oI7iWeeLtoW_hlpydyu0MMS3BvPNPOq_bHa1B6U3NsKveS88DX76sBLlAuVyZtx-NWI2ctY1yrUyQiJYIy2A-Fr0PFeHL_2IKD8UrbTvXCZSohJ7hrq6Oc6YtpwUh318VMEuMqyNaZlaMJq9h_CsdAcoQaV"/>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface tracking-tighter">EzyBall</h1>
+</div>
+<!-- Login Form -->
+<form action="#" class="w-full flex flex-col gap-lg" method="POST">
+<!-- Inputs -->
+<div class="flex flex-col gap-md">
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">mail</span>
+<input class="w-full bg-surface-container-high text-on-surface border-b border-surface-container-high focus:border-primary-container focus:ring-0 pl-xl pr-sm py-md rounded-DEFAULT transition-colors outline-none font-body-md text-body-md placeholder:text-on-surface-variant" id="email" name="email" placeholder="Email" type="email"/>
+</div>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-sm top-1/2 -translate-y-1/2 text-on-surface-variant">lock</span>
+<input class="w-full bg-surface-container-high text-on-surface border-b border-surface-container-high focus:border-primary-container focus:ring-0 pl-xl pr-sm py-md rounded-DEFAULT transition-colors outline-none font-body-md text-body-md placeholder:text-on-surface-variant" id="password" name="password" placeholder="Password" type="password"/>
+</div>
+<div class="flex justify-end w-full">
+<a class="font-body-md text-sm text-primary hover:text-primary-container transition-colors" href="#">Forgot Password?</a>
+</div>
+</div>
+<!-- Primary Action -->
+<button class="w-full bg-primary-container text-[#000000] font-headline-md text-headline-md py-md rounded-DEFAULT active:scale-[0.98] transition-transform flex justify-center items-center gap-sm hover:brightness-110 shadow-[0_0_15px_rgba(255,107,0,0.3)]" type="submit">
+                Iniciar sesión
+                <span class="material-symbols-outlined">arrow_forward</span>
+</button>
+</form>
+<!-- Divider -->
+<div class="w-full flex items-center gap-sm">
+<div class="h-[1px] bg-outline-variant flex-1"></div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">o continúa con</span>
+<div class="h-[1px] bg-outline-variant flex-1"></div>
+</div>
+<!-- Social Logins -->
+<div class="w-full flex gap-md">
+<button class="flex-1 bg-surface-container-low border border-surface-variant text-on-surface font-body-md text-body-md py-md rounded-DEFAULT flex items-center justify-center gap-sm hover:bg-surface-container-high transition-colors active:scale-[0.98]" type="button">
+<svg class="w-6 h-6" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
+<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
+<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
+<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
+</svg>
+                Google
+            </button>
+<button class="flex-1 bg-surface-container-low border border-surface-variant text-on-surface font-body-md text-body-md py-md rounded-DEFAULT flex items-center justify-center gap-sm hover:bg-surface-container-high transition-colors active:scale-[0.98]" type="button">
+<svg class="w-6 h-6 fill-current" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M17.05 13.92c-.02-2.12 1.76-3.17 1.84-3.21-1-1.46-2.55-1.65-3.12-1.68-1.32-.13-2.58.78-3.25.78-.68 0-1.72-.76-2.82-.74-1.43.02-2.76.84-3.5 2.13-1.51 2.62-.39 6.5.94 8.5 1 1.5 2.15 3.19 3.75 3.12 1.54-.06 2.13-1.01 3.99-1.01 1.86 0 2.41 1.01 4.01.98 1.64-.03 2.65-1.57 3.65-3.04 1.15-1.68 1.63-3.3 1.65-3.39-.03-.01-3.12-1.19-3.14-4.44zM14.91 5.92c.81-.98 1.36-2.34 1.21-3.7-.16-.01-1.61.08-2.45.92-.76.75-1.41 2.14-1.24 3.48 1.58.12 2.92-1.02 3.52-1.74z"></path>
+</svg>
+                Apple
+            </button>
+</div>
+<!-- Registration Link -->
+<div class="mt-lg">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                ¿No tienes cuenta? <a class="text-primary font-bold hover:underline decoration-primary underline-offset-4" href="#">Regístrate</a>
+</p>
+</div>
+</main>
+</body></html>

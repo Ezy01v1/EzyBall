@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EzyBall - Onboarding Step 2</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@600;700;800&amp;family=JetBrains+Mono:wght@600&amp;family=Manrope:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-surface": "#e5e2e1",
+                        "on-primary-fixed": "#351000",
+                        "surface-container-high": "#2a2a2a",
+                        "primary-container": "#ff6b00",
+                        "surface-container-low": "#1c1b1b",
+                        "on-secondary-container": "#ffd2cc",
+                        "error-container": "#93000a",
+                        "inverse-primary": "#a04100",
+                        "tertiary": "#acc7ff",
+                        "on-tertiary-container": "#003068",
+                        "on-error": "#690005",
+                        "surface-dim": "#131313",
+                        "secondary-container": "#c5020b",
+                        "secondary": "#ffb4aa",
+                        "on-primary": "#561f00",
+                        "on-secondary": "#690003",
+                        "on-secondary-fixed": "#410001",
+                        "on-tertiary": "#002f67",
+                        "secondary-fixed-dim": "#ffb4aa",
+                        "on-tertiary-fixed": "#001a40",
+                        "tertiary-container": "#5a98ff",
+                        "tertiary-fixed-dim": "#acc7ff",
+                        "on-background": "#e5e2e1",
+                        "on-surface-variant": "#e2bfb0",
+                        "outline-variant": "#5a4136",
+                        "secondary-fixed": "#ffdad5",
+                        "surface-container-lowest": "#0e0e0e",
+                        "error": "#ffb4ab",
+                        "primary": "#ffb693",
+                        "on-secondary-fixed-variant": "#930005",
+                        "background": "#121212", /* Overridden based on prompt */
+                        "surface-bright": "#393939",
+                        "surface": "#1E1E1E", /* Level 1 Surface */
+                        "surface-container-highest": "#353534",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-container": "#572000",
+                        "surface-container": "#201f1f",
+                        "surface-tint": "#ffb693",
+                        "tertiary-fixed": "#d7e2ff",
+                        "outline": "#333333", /* 1px border */
+                        "surface-variant": "#353534",
+                        "on-tertiary-fixed-variant": "#004591",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "on-error-container": "#ffdad6",
+                        "primary-fixed": "#ffdbcc",
+                        "primary-fixed-dim": "#ffb693",
+                        "inverse-on-surface": "#313030"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter-mobile": "12px",
+                        "lg": "24px",
+                        "base": "4px",
+                        "xl": "40px",
+                        "margin-mobile": "20px",
+                        "md": "16px",
+                        "xs": "4px",
+                        "sm": "8px"
+                    },
+                    "fontFamily": {
+                        "body-md": ["Manrope"],
+                        "headline-lg-mobile": ["Anybody"],
+                        "label-caps": ["JetBrains Mono"],
+                        "stats-num": ["Anybody"],
+                        "headline-lg": ["Anybody"],
+                        "body-lg": ["Manrope"],
+                        "display-lg": ["Anybody"],
+                        "headline-md": ["Anybody"]
+                    },
+                    "fontSize": {
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "stats-num": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface h-screen w-full overflow-hidden flex flex-col font-body-md text-body-md antialiased selection:bg-primary-container selection:text-background">
+<!-- Top Navigation Area - Minimal for Onboarding -->
+<header class="w-full pt-margin-mobile px-margin-mobile flex justify-end items-center z-10 shrink-0">
+<a class="text-on-surface-variant font-label-caps text-label-caps uppercase hover:text-primary transition-colors tracking-widest active:scale-95 duration-100" href="#">
+            Saltar
+        </a>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-1 flex flex-col items-center justify-center px-margin-mobile w-full max-w-md mx-auto z-0 overflow-y-auto">
+<!-- Illustration Container -->
+<div class="w-full aspect-square max-w-[320px] mb-xl flex items-center justify-center rounded-2xl bg-surface border border-outline relative overflow-hidden shadow-2xl">
+<!-- Decorative Subtle Grid Background inside Surface -->
+<div class="absolute inset-0 opacity-[0.03] pointer-events-none" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 16px 16px;"></div>
+<img alt="Expert Basketball Tip Cards Illustration" class="w-full h-full object-cover relative z-10 p-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUiuiuvNxnABq0q4lSF4YWp0TrT4wZhJ14hXpLIBnyj--phaepXIrzR21FpPQHw7k2DJl7aLzHXIbIpRFDZgAgXo04fwLb6HWzOvtr7eamwWT11IhvYTUD9YeMNItL7gZur_HsFJ9DfDWA7lhcQ75jtZWfiN-n_eA3b82IXhvVidtUn3p3YArhDdymAkZd7E1Zqj2BQm_vJz3hASBimoQElKjI_-uP5aaq1OWGdbuQRZnC-IuW_FZE"/>
+</div>
+<!-- Copy -->
+<div class="text-center w-full mb-lg space-y-md">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface mb-sm w-full md:font-headline-lg md:text-headline-lg">
+                Aprende de cientos de expertos
+            </h1>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                Accede a tácticas avanzadas y ejercicios diseñados por profesionales para elevar tu juego al siguiente nivel.
+            </p>
+</div>
+</main>
+<!-- Bottom Action Area -->
+<footer class="w-full px-margin-mobile pb-xl pt-lg shrink-0 flex flex-col items-center z-10 bg-gradient-to-t from-background via-background to-transparent">
+<!-- Dot Indicators -->
+<div class="flex gap-sm mb-lg">
+<div class="w-2 h-2 rounded-full bg-surface-variant transition-all duration-300"></div>
+<div class="w-6 h-2 rounded-full bg-primary-container transition-all duration-300"></div>
+<div class="w-2 h-2 rounded-full bg-surface-variant transition-all duration-300"></div>
+</div>
+<!-- Primary Action Button -->
+<button class="w-full bg-primary-container text-background font-headline-md text-headline-md py-[14px] px-lg rounded-xl flex items-center justify-center gap-xs active:scale-95 transition-transform duration-100 min-h-[56px] shadow-[0_0_20px_rgba(255,107,0,0.15)] hover:bg-[#ff8533]">
+<span>Siguiente</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'wght' 600;">arrow_forward</span>
+</button>
+</footer>
+</body></html>

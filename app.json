@@ -1,0 +1,63 @@
+{
+  "expo": {
+    "name": "EzyBall",
+    "slug": "ezyball",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "ezyball",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#131313",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ezyball.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "EzyBall usa la camara para detectar tus tiros. El video se procesa en tu telefono y no se sube a ningun servidor.",
+        "UIBackgroundModes": []
+      }
+    },
+    "android": {
+      "package": "com.ezyball.app",
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.READ_MEDIA_IMAGES",
+        "android.permission.READ_MEDIA_VIDEO"
+      ]
+    },
+    "plugins": [
+      "expo-font",
+      "expo-dev-client",
+      [
+        "react-native-fast-tflite",
+        {
+          "enableCoreMLDelegate": true,
+          "enableAndroidGpuLibraries": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "16.4"
+          },
+          "android": {
+            "minSdkVersion": 26,
+            "compileSdkVersion": 36,
+            "targetSdkVersion": 36
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "1c35c443-c9b3-4154-8948-265dbf38d907"
+      }
+    },
+    "owner": "ezy01v1s-team"
+  }
+}

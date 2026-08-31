@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Grabación en Vivo - EzyBall</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Anybody:wght@400;600;700;800&amp;family=Manrope:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "inverse-primary": "#a04100",
+                        "surface-container-high": "#2a2a2a",
+                        "on-secondary-fixed-variant": "#930005",
+                        "on-primary-fixed-variant": "#7a3000",
+                        "surface-container": "#201f1f",
+                        "tertiary-container": "#5a98ff",
+                        "on-tertiary": "#002f67",
+                        "on-tertiary-container": "#003068",
+                        "surface-variant": "#353534",
+                        "on-primary-fixed": "#351000",
+                        "surface-container-lowest": "#0e0e0e",
+                        "on-primary-container": "#572000",
+                        "tertiary-fixed": "#d7e2ff",
+                        "inverse-surface": "#e5e2e1",
+                        "on-primary": "#561f00",
+                        "outline-variant": "#5a4136",
+                        "on-surface": "#e5e2e1",
+                        "on-error-container": "#ffdad6",
+                        "secondary-fixed": "#ffdad5",
+                        "on-secondary": "#690003",
+                        "primary-fixed": "#ffdbcc",
+                        "outline": "#a98a7d",
+                        "inverse-on-surface": "#313030",
+                        "on-error": "#690005",
+                        "error": "#ffb4ab",
+                        "secondary-fixed-dim": "#ffb4aa",
+                        "on-secondary-container": "#ffd2cc",
+                        "tertiary-fixed-dim": "#acc7ff",
+                        "surface-container-highest": "#353534",
+                        "primary-container": "#ff6b00",
+                        "surface-dim": "#131313",
+                        "error-container": "#93000a",
+                        "surface-tint": "#ffb693",
+                        "on-secondary-fixed": "#410001",
+                        "surface": "#131313",
+                        "surface-container-low": "#1c1b1b",
+                        "on-surface-variant": "#e2bfb0",
+                        "primary-fixed-dim": "#ffb693",
+                        "surface-bright": "#393939",
+                        "on-tertiary-fixed": "#001a40",
+                        "background": "#131313",
+                        "on-tertiary-fixed-variant": "#004591",
+                        "secondary": "#ffb4aa",
+                        "primary": "#ffb693",
+                        "secondary-container": "#c5020b",
+                        "tertiary": "#acc7ff",
+                        "on-background": "#e5e2e1"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "lg": "24px",
+                        "gutter-mobile": "12px",
+                        "base": "4px",
+                        "xl": "40px",
+                        "md": "16px",
+                        "sm": "8px",
+                        "margin-mobile": "20px",
+                        "xs": "4px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Anybody"],
+                        "display-lg": ["Anybody"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-md": ["Anybody"],
+                        "stats-num": ["Anybody"],
+                        "body-md": ["Manrope"],
+                        "headline-lg": ["Anybody"],
+                        "body-lg": ["Manrope"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["28px", { "lineHeight": "34px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "display-lg": ["48px", { "lineHeight": "52px", "letterSpacing": "-0.04em", "fontWeight": "800" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "30px", "fontWeight": "600" }],
+                        "stats-num": ["36px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "800" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-background font-body-md antialiased overflow-hidden selection:bg-primary-container selection:text-on-primary-container h-screen flex flex-col relative">
+<!-- Background Camera Feed Simulation -->
+<div class="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat blur-[6px] scale-105" data-alt="A smartphone camera point-of-view capturing a dimly lit indoor hardwood basketball court. High-contrast, moody lighting with deep shadows highlighting the polished floor and a distant hoop. The focus is slightly soft, indicating a live video feed in a modern, aggressive athletic environment." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuANmEN1mnr0e3EsquJUaHTf-RzXvoQgtjgpfnyyM6UYmH3mR3zQpPSWUIznt80_hWBu39aKAeMfwpw9njeBICInKpN4C3AIHh317BomcyEqnduOwUho9X8Fj9j5NA1Kdw0jWMBsbYXfJECmxlR4Z5aHATQgKE9fF-QvFWvbrnHEVpp05173ycwF0kd1guU_aj5RLxXlQRoMv6dDhwsE2lGG7VRszJSTAe_8KGgbiHn9fhGQUGeZQnEB')">
+</div>
+<!-- Dark Gradient Overlay for UI legibility -->
+<div class="absolute inset-0 z-0 bg-gradient-to-b from-background/90 via-background/30 to-background/95"></div>
+<!-- Main Content Canvas -->
+<main class="relative z-10 flex flex-col h-full w-full justify-between p-margin-mobile">
+<!-- Top Header & Stats Overlay -->
+<header class="w-full pt-2 flex flex-col gap-4">
+<!-- Utility Bar -->
+<div class="flex items-center justify-between">
+<!-- Recording Indicator -->
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container/80 backdrop-blur-sm border border-outline-variant">
+<div class="w-2.5 h-2.5 rounded-full bg-error animate-pulse shadow-[0_0_8px_rgba(255,180,171,0.6)]"></div>
+<span class="font-label-caps text-label-caps text-on-surface tracking-widest uppercase">REC 04:12</span>
+</div>
+<!-- Quick Settings (Decorative) -->
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container/80 backdrop-blur-sm border border-outline-variant text-on-surface hover:text-primary active:scale-95 transition-all">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">flip_camera_ios</span>
+</button>
+</div>
+<!-- Primary Stats Card -->
+<div class="w-full bg-surface-container-low/90 backdrop-blur-md border border-outline-variant rounded-xl p-md flex flex-col gap-sm shadow-xl">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">location_on</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">Zona: Esquina Derecha</span>
+</div>
+<div class="flex items-baseline gap-2 mt-1">
+<span class="font-stats-num text-stats-num text-on-surface">4</span>
+<span class="font-headline-md text-headline-md text-outline">/</span>
+<span class="font-headline-md text-headline-md text-on-surface-variant">7</span>
+<span class="font-label-caps text-label-caps text-primary ml-2 uppercase opacity-80">Aciertos / Intentos</span>
+</div>
+</div>
+</header>
+<!-- Center Viewfinder Grid (Decorative) -->
+<div class="flex-1 flex items-center justify-center pointer-events-none opacity-40">
+<div class="w-72 h-72 border border-outline/30 relative flex items-center justify-center">
+<!-- Corner Brackets -->
+<div class="absolute -top-[1px] -left-[1px] w-6 h-6 border-t-2 border-l-2 border-primary"></div>
+<div class="absolute -top-[1px] -right-[1px] w-6 h-6 border-t-2 border-r-2 border-primary"></div>
+<div class="absolute -bottom-[1px] -left-[1px] w-6 h-6 border-b-2 border-l-2 border-primary"></div>
+<div class="absolute -bottom-[1px] -right-[1px] w-6 h-6 border-b-2 border-r-2 border-primary"></div>
+<!-- Center Crosshair -->
+<span class="material-symbols-outlined text-primary text-3xl">add</span>
+</div>
+</div>
+<!-- Bottom Action Area -->
+<footer class="w-full pb-xl pt-8 flex flex-col items-center justify-end">
+<button class="flex flex-col items-center justify-center gap-md group active:scale-95 transition-transform duration-100 ease-out w-full">
+<!-- Large Stop Button -->
+<div class="w-24 h-24 rounded-full bg-secondary-container border-[3px] border-on-secondary-container/20 flex items-center justify-center shadow-[0_0_30px_rgba(197,2,11,0.4)] group-hover:bg-error-container transition-colors duration-200">
+<div class="w-8 h-8 bg-on-secondary rounded-DEFAULT"></div>
+</div>
+<!-- Action Label -->
+<span class="font-headline-md text-headline-md text-on-surface tracking-tighter">Detener sesión</span>
+</button>
+</footer>
+</main>
+</body></html>
