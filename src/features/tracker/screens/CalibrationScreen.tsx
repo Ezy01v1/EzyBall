@@ -12,8 +12,13 @@ import { COURT_ZONES } from '@/types/court';
 
 import { getCameraPreview } from '../vision/cameraModule';
 import { aroDesdeToque, frameAVista, PROPORCION_ARO, type Punto, type Tamano } from '../vision/geometria';
-import { CONFIG_AUTO, detectorDisponible } from '../vision/hoopDetector';
-import type { Box } from '../vision/types';
+import {
+  configAuto,
+  detectorDisponible,
+  perfilActivo,
+  PERFIL_COCO,
+  type Detecciones,
+} from '../vision/hoopDetector';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Ruta = RouteProp<RootStackParamList, 'Calibracion'>;
@@ -54,13 +59,14 @@ export function CalibrationScreen() {
 
   const modo: 'auto' | 'manual' = puedeDetectar && camaraLista && aro ? 'auto' : 'manual';
 
-  const onDeteccion = useCallback((caja: Box | null, _ts: number, ancho: number, alto: number) => {
+  const onDeteccion = useCallback((det: Detecciones, _ts: number, ancho: number, alto: number) => {
+    const caja = det.balon;
     setFrame((previo) =>
       previo && previo.width === ancho && previo.height === alto ? previo : { width: ancho, height: alto },
     );
     // Feedback de que el modelo ve el balón: un punto sobre él.
     setBalon(
-      caja && caja.score >= CONFIG_AUTO.scoreMinimo
+      caja && caja.score >= configAuto(perfilActivo() ?? PERFIL_COCO).scoreMinimo
         ? { x: caja.x + caja.width / 2, y: caja.y + caja.height / 2 }
         : null,
     );

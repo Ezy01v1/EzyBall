@@ -17,9 +17,8 @@ import { formatDuration } from '@/utils/format';
 import { saveSession, syncPendingSessions } from '../data/sessionRepository';
 import { useSessionStore, useZoneCounters } from '../store/sessionStore';
 import { getCameraPreview } from '../vision/cameraModule';
-import { CONFIG_AUTO } from '../vision/hoopDetector';
+import { configAuto, perfilActivo, PERFIL_COCO, type Detecciones } from '../vision/hoopDetector';
 import { createReducerState, reduceFrame } from '../vision/shotEventReducer';
-import type { Box } from '../vision/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Ruta = RouteProp<RootStackParamList, 'Grabacion'>;
@@ -79,12 +78,12 @@ export function LiveRecordingScreen() {
   const estadoReductor = useRef(createReducerState());
 
   const onDeteccion = useCallback(
-    (balon: Box | null, timestamp: number) => {
+    (det: Detecciones, timestamp: number) => {
       if (!aro) return;
       const { state, event } = reduceFrame(
         estadoReductor.current,
-        { timestamp, aro, balon },
-        CONFIG_AUTO,
+        { timestamp, aro, balon: det.balon },
+        configAuto(perfilActivo() ?? PERFIL_COCO),
       );
       estadoReductor.current = state;
       if (event) {

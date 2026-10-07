@@ -15,48 +15,95 @@ import type { Box, FrameDetection } from './types';
  *   calibración. El aro no se mueve durante la sesión, así que una posición
  *   fija es tan buena como una detección y bastante más estable.
  *
- * Camino B (más adelante): entrenar `hoop-ball.tflite` con las dos clases.
- * Solo cambiarían `cargarModeloEmpaquetado()`, las clases y `parseOutput()`; ni el reductor ni
- * la UI se enteran.
+ * Camino B (en curso): modelo propio `hoop-ball.tflite` con las dos clases.
+ * Cada modelo se describe con un `PerfilModelo`; ni el reductor ni la UI se
+ * enteran de cuál está activo.
  *
  * DECISIONES DE ARQUITECTURA
  * --------------------------
  * - Todo el procesamiento es on-device. El frame nunca sale del teléfono ni se
- *   escribe a disco: solo sale del worklet una caja por frame.
+ *   escribe a disco: del worklet solo salen las cajas de aro y balón por frame.
  * - La interpretación (¿esto fue canasta?) vive en el hilo de JS, no en el
  *   worklet, porque es lógica de negocio que queremos testear sin cámara.
  * - El frame output usa `dropFramesWhileBusy`: si el modelo tarda más que un
  *   frame, se saltan frames en vez de acumular retraso.
  */
 
-/** Resolución de entrada del modelo (cuadrada). SSD-MobileNet v1: 300x300. */
-export const MODEL_INPUT_SIZE = 300;
-
-/** Índice de "sports ball" en la salida del SSD de COCO (labelmap sin "???"). */
-export const CLASE_BALON = 36;
-
 /**
- * Configuración del reductor para detección automática. El SSD genérico da
- * scores más bajos que un modelo entrenado para balones, sobre todo con el
- * balón pequeño y movido en el aire; con 0.4 se perdían demasiados frames.
+ * Perfil de un modelo: todo lo que cambia entre el SSD genérico de COCO y el
+ * modelo propio `hoop-ball`. El resto del código solo lee el perfil.
  */
-export const CONFIG_AUTO: ReducerConfig = { ...DEFAULT_CONFIG, scoreMinimo: 0.3 };
+export interface PerfilModelo {
+  nombre: 'hoop-ball' | 'balon-coco';
+  /** Resolución de entrada del modelo (cuadrada). */
+  inputSize: number;
+  /** Índice de clase del aro, o null si el modelo no lo detecta. */
+  claseAro: number | null;
+  claseBalon: number;
+  /**
+   * Score mínimo para dar una detección por buena. El SSD genérico da scores
+   * más bajos que un modelo entrenado, sobre todo con el balón pequeño y movido
+   * en el aire; con 0.4 se perdían demasiados frames.
+   */
+  scoreMinimo: number;
+  /** Posición de cada tensor en la salida de runSync. */
+  salidas: { cajas: number; clases: number; scores: number };
+}
+
+/** SSD-MobileNet v1 de COCO: 300x300, "sports ball" es el índice 36. Sin aro. */
+export const PERFIL_COCO: PerfilModelo = {
+  nombre: 'balon-coco',
+  inputSize: 300,
+  claseAro: null,
+  claseBalon: 36,
+  scoreMinimo: 0.3,
+  salidas: { cajas: 0, clases: 1, scores: 2 },
+};
+
+/** Modelo propio aro + balón. Valores provisionales: la Task 6 los fija. */
+export const PERFIL_HOOP_BALL: PerfilModelo = {
+  nombre: 'hoop-ball',
+  inputSize: 320,
+  claseAro: 1,
+  claseBalon: 2,
+  scoreMinimo: 0.4,
+  salidas: { cajas: 0, clases: 1, scores: 2 },
+};
+
+export interface ModeloEmpaquetado {
+  /** Id de asset de Metro (resultado de require). */
+  asset: number;
+  perfil: PerfilModelo;
+}
 
 /**
  * Carga del modelo. Se hace con require() dentro de try/catch a propósito:
  * si el .tflite no está en el bundle, la app debe seguir abriendo.
+ *
+ * Aún no se hace require de `hoop-ball.tflite`: Metro resuelve los require al
+ * empaquetar y un archivo inexistente rompería el bundle aunque haya try/catch.
  */
-export function cargarModeloEmpaquetado(): number | null {
+export function cargarModeloEmpaquetado(): ModeloEmpaquetado | null {
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    return require('../../../../assets/models/balon-coco.tflite') as number;
+    const asset = require('../../../../assets/models/balon-coco.tflite') as number;
+    return { asset, perfil: PERFIL_COCO };
   } catch {
     return null;
   }
 }
 
+export function perfilActivo(): PerfilModelo | null {
+  return cargarModeloEmpaquetado()?.perfil ?? null;
+}
+
 export function detectorDisponible(): boolean {
   return cargarModeloEmpaquetado() != null;
+}
+
+/** Configuración del reductor para detección automática con ese perfil. */
+export function configAuto(perfil: PerfilModelo): ReducerConfig {
+  return { ...DEFAULT_CONFIG, scoreMinimo: perfil.scoreMinimo };
 }
 
 /**
@@ -68,7 +115,11 @@ export function detectorDisponible(): boolean {
  * normalizadas sobre el frame completo, que es el sistema de coordenadas en
  * el que se calibró el aro. SSD tolera bien esa deformación.
  */
-export function prepareInput(frame: Frame, tipo: 'uint8' | 'float32'): ArrayBuffer | null {
+export function prepareInput(
+  frame: Frame,
+  tipo: 'uint8' | 'float32',
+  inputSize: number,
+): ArrayBuffer | null {
   'worklet';
   if (!frame.hasPixelBuffer) return null;
 
@@ -88,7 +139,7 @@ export function prepareInput(frame: Frame, tipo: 'uint8' | 'float32'): ArrayBuff
   const bpp = bytesFila >= ancho * 4 ? 4 : 3;
   const origen = new Uint8Array(frame.getPixelBuffer());
 
-  const n = MODEL_INPUT_SIZE;
+  const n = inputSize;
   const u8 = tipo === 'uint8' ? new Uint8Array(n * n * 3) : null;
   const f32 = tipo === 'float32' ? new Float32Array(n * n * 3) : null;
 
@@ -116,8 +167,14 @@ export function prepareInput(frame: Frame, tipo: 'uint8' | 'float32'): ArrayBuff
   return (u8 ?? f32)!.buffer as ArrayBuffer;
 }
 
+/** Aro y balón detectados en un frame (cajas normalizadas, o null si no hay). */
+export interface Detecciones {
+  aro: Box | null;
+  balon: Box | null;
+}
+
 /**
- * Salida cruda del SSD -> caja del balón con más score.
+ * Salida cruda del SSD -> caja del aro y del balón con más score de cada clase.
  *
  * Formato del postprocesado TFLite de detección: cajas `[ymin, xmin, ymax,
  * xmax]` normalizadas, un array de clases y otro de scores.
@@ -126,33 +183,41 @@ export function parseOutput(
   cajas: Float32Array | number[],
   clases: Float32Array | number[],
   scores: Float32Array | number[],
-): Box | null {
+  perfil: PerfilModelo,
+): Detecciones {
   'worklet';
 
+  let aro: Box | null = null;
   let balon: Box | null = null;
   const total = Math.min(scores.length, clases.length, Math.floor(cajas.length / 4));
 
   for (let i = 0; i < total; i += 1) {
     const score = scores[i] ?? 0;
     if (score <= 0) continue;
-    if (Math.round(clases[i] ?? -1) !== CLASE_BALON) continue;
-    if (balon && score <= balon.score) continue;
+    const clase = Math.round(clases[i] ?? -1);
+    const esAro = perfil.claseAro != null && clase === perfil.claseAro;
+    const esBalon = clase === perfil.claseBalon;
+    if (!esAro && !esBalon) continue;
+    if (esAro && aro && score <= aro.score) continue;
+    if (esBalon && balon && score <= balon.score) continue;
 
     const ymin = cajas[i * 4] ?? 0;
     const xmin = cajas[i * 4 + 1] ?? 0;
     const ymax = cajas[i * 4 + 2] ?? 0;
     const xmax = cajas[i * 4 + 3] ?? 0;
 
-    balon = {
+    const caja: Box = {
       x: xmin,
       y: ymin,
       width: Math.max(0, xmax - xmin),
       height: Math.max(0, ymax - ymin),
       score,
     };
+    if (esAro) aro = caja;
+    else balon = caja;
   }
 
-  return balon;
+  return { aro, balon };
 }
 
 /** Detección vacía: el reductor la ignora sin romper su estado. */
