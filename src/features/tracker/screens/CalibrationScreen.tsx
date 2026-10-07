@@ -65,6 +65,9 @@ export function CalibrationScreen() {
   const estadoAro = useRef<EstadoAroEstable>(crearEstadoAroEstable());
   const [aroPropuesto, setAroPropuesto] = useState<Box | null>(null);
   const [aroConfirmado, setAroConfirmado] = useState<Box | null>(null);
+  const ultimoEstable = useRef<Box | null>(null);
+  const mostrado = useRef<Box | null>(null);
+  const congelado = useRef(false);
 
   const puedeDetectar = CameraPreview != null && detectorDisponible();
   // El toque manual siempre gana sobre el aro confirmado.
@@ -90,32 +93,42 @@ export function CalibrationScreen() {
 
   const modo: 'auto' | 'manual' = puedeDetectar && camaraLista && aro ? 'auto' : 'manual';
 
-  const buscandoAro = toque == null && aroConfirmado == null;
+  congelado.current = toque != null || aroConfirmado != null;
 
-  const onDeteccion = useCallback(
-    (det: Detecciones, _ts: number, ancho: number, alto: number) => {
-      if (buscandoAro) {
-        const r = acumularAro(estadoAro.current, det.aro);
-        estadoAro.current = r.estado;
-        setAroPropuesto((previo) =>
-          (previo == null) === (r.estable == null) ? previo : r.estable,
-        );
+  const onDeteccion = useCallback((det: Detecciones, _ts: number, ancho: number, alto: number) => {
+    if (!congelado.current) {
+      const r = acumularAro(estadoAro.current, det.aro);
+      estadoAro.current = r.estado;
+      ultimoEstable.current = r.estable;
+      const e = r.estable;
+      const m = mostrado.current;
+      const cambia =
+        (m == null) !== (e == null) ||
+        (m != null &&
+          e != null &&
+          Math.hypot(
+            e.x + e.width / 2 - (m.x + m.width / 2),
+            e.y + e.height / 2 - (m.y + m.height / 2),
+          ) >
+            0.05 * m.width);
+      if (cambia) {
+        mostrado.current = e;
+        setAroPropuesto(e);
       }
-      const caja = det.balon;
-      setFrame((previo) =>
-        previo && previo.width === ancho && previo.height === alto
-          ? previo
-          : { width: ancho, height: alto },
-      );
-      // Feedback de que el modelo ve el balón: un punto sobre él.
-      setBalon(
-        caja && caja.score >= configAuto(perfilActivo() ?? PERFIL_COCO).scoreMinimo
-          ? { x: caja.x + caja.width / 2, y: caja.y + caja.height / 2 }
-          : null,
-      );
-    },
-    [buscandoAro],
-  );
+    }
+    const caja = det.balon;
+    setFrame((previo) =>
+      previo && previo.width === ancho && previo.height === alto
+        ? previo
+        : { width: ancho, height: alto },
+    );
+    // Feedback de que el modelo ve el balón: un punto sobre él.
+    setBalon(
+      caja && caja.score >= configAuto(perfilActivo() ?? PERFIL_COCO).scoreMinimo
+        ? { x: caja.x + caja.width / 2, y: caja.y + caja.height / 2 }
+        : null,
+    );
+  }, []);
 
   const onLayoutVisor = (e: LayoutChangeEvent) => {
     const { width, height } = e.nativeEvent.layout;
@@ -248,7 +261,7 @@ export function CalibrationScreen() {
             <Button
               label="Confirmar aro"
               icono="check"
-              onPress={() => setAroConfirmado(aroPropuesto)}
+              onPress={() => setAroConfirmado(ultimoEstable.current ?? aroPropuesto)}
             />
           </>
         ) : null}
