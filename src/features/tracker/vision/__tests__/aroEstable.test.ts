@@ -23,6 +23,11 @@ describe('aroEstable', () => {
   });
   it('tolera deriva menor al 15 %', () =>
     expect(alimentar([...Array(4).fill(aro(0.4)), ...Array(4).fill(aro(0.414))]).estable).not.toBeNull());
+  it('promedia solo los últimos N frames tras un cambio gradual', () => {
+    // Ancla 0.4 en los primeros 8 frames; luego 0.41 durante 8: la ventana debe ser 0.41.
+    const r = alimentar([...Array(8).fill(aro(0.4)), ...Array(8).fill(aro(0.41))]);
+    expect(r.estable?.x).toBeCloseTo(0.41, 4);
+  });
   it('no muta el estado de entrada', () => {
     const e = crearEstadoAroEstable();
     acumularAro(e, aro());

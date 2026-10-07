@@ -24,8 +24,10 @@ export const CONFIG_ARO_ESTABLE: ConfigAroEstable = {
 
 export interface EstadoAroEstable {
   /**
-   * Racha actual. `racha[0]` es el ancla (primer aro de la racha) y no se
-   * desplaza, para que la deriva se mida siempre contra el mismo punto.
+   * Racha actual: `racha[0]` es el ancla (primer aro de la racha, solo para
+   * medir la deriva) y el resto son los frames recientes contiguos. Tras
+   * acotar, la longitud es como máximo N+1; los N últimos son la ventana
+   * que se promedia.
    */
   racha: Box[];
 }
@@ -81,17 +83,16 @@ export function acumularAro(
       racha = [aro];
     } else {
       racha = [...estado.racha, aro];
-      // Acotar manteniendo el ancla en índice 0 y los últimos N-1 frames.
-      if (racha.length > framesNecesarios) {
-        racha = framesNecesarios > 1
-          ? [ancla, ...racha.slice(-(framesNecesarios - 1))]
-          : racha.slice(-1);
+      // Acotar: ancla en índice 0 (solo para la deriva) + los últimos N frames
+      // contiguos, que son los que se promedian. Longitud máxima N+1.
+      if (racha.length > framesNecesarios + 1) {
+        racha = [ancla, ...racha.slice(-framesNecesarios)];
       }
     }
   }
 
   const estable = racha.length >= framesNecesarios
-    ? promedio(racha.slice(-framesNecesarios))
+    ? promedio(racha.slice(-framesNecesarios)) // últimos N frames contiguos
     : null;
   return { estado: { racha }, estable };
 }
