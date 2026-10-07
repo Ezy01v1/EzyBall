@@ -1,15 +1,35 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { Camera, useCameraDevice, useCameraPermission } from 'react-native-vision-camera';
+import { useTensorflowModel } from 'react-native-fast-tflite';
+import {
+  Camera,
+  CommonResolutions,
+  useCameraDevice,
+  useCameraPermission,
+  useFrameOutput,
+} from 'react-native-vision-camera';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { AppText, Button } from '@/components';
 import { colors, spacing } from '@/theme';
+
+import { cargarModeloEmpaquetado, parseOutput, prepareInput } from './hoopDetector';
+import type { Box } from './types';
+
+/**
+ * Resultado del detector para un frame analizado. `ancho`/`alto` son las
+ * dimensiones del frame, necesarias para traducir toques de pantalla a
+ * coordenadas del frame (ver `geometria.ts`).
+ */
+export type OnDeteccion = (balon: Box | null, timestamp: number, ancho: number, alto: number) => void;
 
 interface CameraPreviewProps {
   /** `false` pausa la sesión de cámara (pantalla en background, sesión terminada). */
   activa: boolean;
   /** Se llama cuando el permiso está concedido y hay dispositivo disponible. */
   onListo?: (listo: boolean) => void;
+  /** Si se pasa, se analiza cada frame con el detector de balón. */
+  onDeteccion?: OnDeteccion;
 }
 
 /**
@@ -26,11 +46,62 @@ interface CameraPreviewProps {
  * video, foto ni audio, y por tanto no hay ruta de código que escriba un
  * fichero. En Fase 2 se añadirá un `useFrameOutput` para el detector, que
  * tampoco graba: entrega fotogramas en memoria que se descartan tras analizarse.
+ * Del worklet solo sale la caja del balón, nunca píxeles.
  */
-export function CameraPreview({ activa, onListo }: CameraPreviewProps) {
+export function CameraPreview({ activa, onListo, onDeteccion }: CameraPreviewProps) {
   const { hasPermission, requestPermission, canRequestPermission } = useCameraPermission();
   const device = useCameraDevice('back');
   const [pidiendo, setPidiendo] = useState(false);
+
+  // CPU (XNNPACK) a propósito: el modelo cuantizado int8 va de sobra rápido a
+  // 300x300 y los delegados GPU/NNAPI fallan con ops cuantizadas en muchos
+  // Android de gama media.
+  const detector = useTensorflowModel(cargarModeloEmpaquetado() ?? 0, []);
+  const modelo = detector.state === 'loaded' ? detector.model : undefined;
+  const tipoEntrada = modelo?.inputs[0]?.dataType === 'float32' ? 'float32' : 'uint8';
+
+  // Callback estable para el worklet: si su identidad cambiase en cada render,
+  // el frame output se recrearía una y otra vez.
+  const onDeteccionRef = useRef(onDeteccion);
+  useEffect(() => {
+    onDeteccionRef.current = onDeteccion;
+  }, [onDeteccion]);
+  const reenviar = useCallback<OnDeteccion>((balon, timestamp, ancho, alto) => {
+    onDeteccionRef.current?.(balon, timestamp, ancho, alto);
+  }, []);
+  const detectar = onDeteccion != null && modelo != null;
+
+  const frameOutput = useFrameOutput({
+    targetResolution: CommonResolutions.VGA_16_9,
+    pixelFormat: 'rgb',
+    // El frame llega ya girado a la orientación del teléfono: las coordenadas
+    // del modelo coinciden con lo que el usuario ve en el preview.
+    enablePhysicalBufferRotation: true,
+    dropFramesWhileBusy: true,
+    onFrame(frame) {
+      'worklet';
+      try {
+        if (detectar && modelo) {
+          const entrada = prepareInput(frame, tipoEntrada);
+          let balon: Box | null = null;
+          if (entrada) {
+            const salida = modelo.runSync([entrada]);
+            if (salida.length >= 3) {
+              balon = parseOutput(
+                new Float32Array(salida[0]!),
+                new Float32Array(salida[1]!),
+                new Float32Array(salida[2]!),
+              );
+            }
+          }
+          scheduleOnRN(reenviar, balon, Date.now(), frame.width, frame.height);
+        }
+      } finally {
+        // Obligatorio: sin dispose el pipeline de cámara se estanca.
+        frame.dispose();
+      }
+    },
+  });
 
   useEffect(() => {
     onListo?.(Boolean(hasPermission && device));
@@ -84,6 +155,8 @@ export function CameraPreview({ activa, onListo }: CameraPreviewProps) {
       style={styles.camara}
       device={device}
       isActive={activa}
+      resizeMode="cover"
+      outputs={detectar ? [frameOutput] : []}
       // 30 fps basta para seguir un balón y cuesta bastante menos batería y
       // calor que 60 en una sesión de 20 minutos al sol.
       constraints={[{ fps: 30 }]}

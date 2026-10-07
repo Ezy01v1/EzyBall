@@ -27,10 +27,23 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
-      ]
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#212A2F"
+      }
     },
     "plugins": [
       "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 280,
+          "resizeMode": "contain",
+          "backgroundColor": "#131313"
+        }
+      ],
       "expo-dev-client",
       [
         "react-native-fast-tflite",
@@ -48,7 +61,10 @@
           "android": {
             "minSdkVersion": 26,
             "compileSdkVersion": 36,
-            "targetSdkVersion": 36
+            "targetSdkVersion": 36,
+            "buildArchs": [
+              "arm64-v8a"
+            ]
           }
         }
       ]
@@ -58,6 +74,7 @@
         "projectId": "1c35c443-c9b3-4154-8948-265dbf38d907"
       }
     },
-    "owner": "ezy01v1s-team"
+    "owner": "ezy01v1s-team",
+    "icon": "./assets/icon.png"
   }
 }

@@ -13,3 +13,7 @@ ios/
 *.key
 *.mobileprovision
 .DS_Store
+
+# IDE / backups
+.idea/
+*.bak

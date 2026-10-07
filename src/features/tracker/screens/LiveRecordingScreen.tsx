@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +17,9 @@ import { formatDuration } from '@/utils/format';
 import { saveSession, syncPendingSessions } from '../data/sessionRepository';
 import { useSessionStore, useZoneCounters } from '../store/sessionStore';
 import { getCameraPreview } from '../vision/cameraModule';
+import { CONFIG_AUTO } from '../vision/hoopDetector';
+import { createReducerState, reduceFrame } from '../vision/shotEventReducer';
+import type { Box } from '../vision/types';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Ruta = RouteProp<RootStackParamList, 'Grabacion'>;
@@ -66,13 +69,31 @@ export function LiveRecordingScreen() {
   }, []);
 
   const marcar = (resultado: 'canasta' | 'fallo') => {
-    void Haptics.notificationAsync(
-      resultado === 'canasta'
-        ? Haptics.NotificationFeedbackType.Success
-        : Haptics.NotificationFeedbackType.Warning,
-    );
+    vibrar(resultado);
     registrarTiro(resultado, 'manual');
   };
+
+  // Detección automática: el aro viene fijo de la calibración y el modelo
+  // aporta el balón en cada frame analizado. El reductor decide el resultado.
+  const aro = params.modo === 'auto' ? params.aro : undefined;
+  const estadoReductor = useRef(createReducerState());
+
+  const onDeteccion = useCallback(
+    (balon: Box | null, timestamp: number) => {
+      if (!aro) return;
+      const { state, event } = reduceFrame(
+        estadoReductor.current,
+        { timestamp, aro, balon },
+        CONFIG_AUTO,
+      );
+      estadoReductor.current = state;
+      if (event) {
+        vibrar(event.resultado);
+        registrarTiro(event.resultado, 'auto', event.confianza);
+      }
+    },
+    [aro, registrarTiro],
+  );
 
   const detener = async () => {
     if (guardando) return;
@@ -94,7 +115,9 @@ export function LiveRecordingScreen() {
 
   return (
     <View style={styles.raiz}>
-      {CameraPreview ? <CameraPreview activa /> : null}
+      {CameraPreview ? (
+        <CameraPreview activa onDeteccion={aro ? onDeteccion : undefined} />
+      ) : null}
       <View style={styles.velo} />
 
       <View style={[styles.contenido, { paddingTop: insets.top + spacing.sm, paddingBottom: insets.bottom + spacing.md }]}>
@@ -201,6 +224,14 @@ export function LiveRecordingScreen() {
         </View>
       </Modal>
     </View>
+  );
+}
+
+function vibrar(resultado: 'canasta' | 'fallo') {
+  void Haptics.notificationAsync(
+    resultado === 'canasta'
+      ? Haptics.NotificationFeedbackType.Success
+      : Haptics.NotificationFeedbackType.Warning,
   );
 }
 

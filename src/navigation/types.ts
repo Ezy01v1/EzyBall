@@ -1,5 +1,6 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
+import type { Box } from '@/features/tracker/vision/types';
 import type { CourtZoneId } from '@/types/court';
 import type { TipCategory } from '@/types/tip';
 
@@ -26,7 +27,8 @@ export type RootStackParamList = {
 
   NuevaSesion: undefined;
   Calibracion: { zona: CourtZoneId; etiqueta: string };
-  Grabacion: { zona: CourtZoneId; etiqueta: string; modo: 'auto' | 'manual' };
+  /** `aro`: caja del aro marcada en calibración, normalizada al frame. Solo en modo auto. */
+  Grabacion: { zona: CourtZoneId; etiqueta: string; modo: 'auto' | 'manual'; aro?: Box };
   ResumenSesion: { sesionId: string };
   Privacidad: undefined;
 };

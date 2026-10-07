@@ -1,6 +1,12 @@
 import type { ComponentType } from 'react';
 
-type PreviewProps = { activa: boolean; onListo?: (listo: boolean) => void };
+import type { Box } from './types';
+
+type PreviewProps = {
+  activa: boolean;
+  onListo?: (listo: boolean) => void;
+  onDeteccion?: (balon: Box | null, timestamp: number, ancho: number, alto: number) => void;
+};
 
 /**
  * Carga condicional de la cámara.

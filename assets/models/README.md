@@ -1,13 +1,16 @@
 # Modelos on-device
 
-Aqui va el modelo TensorFlow Lite de deteccion aro/balon:
+## balon-coco.tflite (en uso, camino A)
 
-    hoop-ball.tflite
+SSD-MobileNet v1 cuantizado sobre COCO, 300x300 uint8, de
+https://storage.googleapis.com/download.tensorflow.org/models/tflite/coco_ssd_mobilenet_v1_1.0_quant_2018_06_29.zip
+(`detect.tflite` renombrado). Solo se usa la clase 36, "sports ball". El aro
+no lo detecta ningun modelo: lo marca el usuario en la pantalla de calibracion.
 
-**Todavia no existe.** Mientras falte, `detectorDisponible()` devuelve `false`
-y el tracker funciona en modo manual (el usuario marca canasta/fallo con el
-pulgar). La app no se rompe por su ausencia: el require esta envuelto en
-try/catch en `src/features/tracker/vision/hoopDetector.ts`.
+## hoop-ball.tflite (camino B, pendiente)
+
+**Todavia no existe.** Cuando exista, sustituira a `balon-coco.tflite` en
+`cargarModeloEmpaquetado()` y el aro dejara de marcarse a mano.
 
 ## Que hace falta para entrenarlo
 
