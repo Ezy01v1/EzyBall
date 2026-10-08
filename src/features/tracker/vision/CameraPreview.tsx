@@ -13,7 +13,13 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { AppText, Button } from '@/components';
 import { colors, spacing } from '@/theme';
 
-import { cargarModeloEmpaquetado, parseOutput, prepareInput } from './hoopDetector';
+import {
+  cargarModeloEmpaquetado,
+  PERFIL_COCO,
+  parseOutput,
+  prepareInput,
+  type Detecciones,
+} from './hoopDetector';
 import type { Box } from './types';
 
 /**
@@ -21,7 +27,7 @@ import type { Box } from './types';
  * dimensiones del frame, necesarias para traducir toques de pantalla a
  * coordenadas del frame (ver `geometria.ts`).
  */
-export type OnDeteccion = (balon: Box | null, timestamp: number, ancho: number, alto: number) => void;
+export type OnDeteccion = (det: Detecciones, timestamp: number, ancho: number, alto: number) => void;
 
 interface CameraPreviewProps {
   /** `false` pausa la sesión de cámara (pantalla en background, sesión terminada). */
@@ -46,7 +52,7 @@ interface CameraPreviewProps {
  * video, foto ni audio, y por tanto no hay ruta de código que escriba un
  * fichero. En Fase 2 se añadirá un `useFrameOutput` para el detector, que
  * tampoco graba: entrega fotogramas en memoria que se descartan tras analizarse.
- * Del worklet solo sale la caja del balón, nunca píxeles.
+ * Del worklet solo salen las cajas del aro y del balón, nunca píxeles.
  */
 export function CameraPreview({ activa, onListo, onDeteccion }: CameraPreviewProps) {
   const { hasPermission, requestPermission, canRequestPermission } = useCameraPermission();
@@ -56,7 +62,9 @@ export function CameraPreview({ activa, onListo, onDeteccion }: CameraPreviewPro
   // CPU (XNNPACK) a propósito: el modelo cuantizado int8 va de sobra rápido a
   // 300x300 y los delegados GPU/NNAPI fallan con ops cuantizadas en muchos
   // Android de gama media.
-  const detector = useTensorflowModel(cargarModeloEmpaquetado() ?? 0, []);
+  const empaquetado = cargarModeloEmpaquetado();
+  const perfil = empaquetado?.perfil ?? PERFIL_COCO;
+  const detector = useTensorflowModel(empaquetado?.asset ?? 0, []);
   const modelo = detector.state === 'loaded' ? detector.model : undefined;
   const tipoEntrada = modelo?.inputs[0]?.dataType === 'float32' ? 'float32' : 'uint8';
 
@@ -66,9 +74,12 @@ export function CameraPreview({ activa, onListo, onDeteccion }: CameraPreviewPro
   useEffect(() => {
     onDeteccionRef.current = onDeteccion;
   }, [onDeteccion]);
-  const reenviar = useCallback<OnDeteccion>((balon, timestamp, ancho, alto) => {
-    onDeteccionRef.current?.(balon, timestamp, ancho, alto);
-  }, []);
+  const reenviar = useCallback(
+    (aro: Box | null, balon: Box | null, timestamp: number, ancho: number, alto: number) => {
+      onDeteccionRef.current?.({ aro, balon }, timestamp, ancho, alto);
+    },
+    [],
+  );
   const detectar = onDeteccion != null && modelo != null;
 
   const frameOutput = useFrameOutput({
@@ -82,19 +93,24 @@ export function CameraPreview({ activa, onListo, onDeteccion }: CameraPreviewPro
       'worklet';
       try {
         if (detectar && modelo) {
-          const entrada = prepareInput(frame, tipoEntrada);
+          const entrada = prepareInput(frame, tipoEntrada, perfil.inputSize);
+          let aro: Box | null = null;
           let balon: Box | null = null;
           if (entrada) {
             const salida = modelo.runSync([entrada]);
-            if (salida.length >= 3) {
-              balon = parseOutput(
-                new Float32Array(salida[0]!),
-                new Float32Array(salida[1]!),
-                new Float32Array(salida[2]!),
+            const { cajas, clases, scores } = perfil.salidas;
+            if (salida.length > Math.max(cajas, clases, scores)) {
+              const det = parseOutput(
+                new Float32Array(salida[cajas]!),
+                new Float32Array(salida[clases]!),
+                new Float32Array(salida[scores]!),
+                perfil,
               );
+              aro = det.aro;
+              balon = det.balon;
             }
           }
-          scheduleOnRN(reenviar, balon, Date.now(), frame.width, frame.height);
+          scheduleOnRN(reenviar, aro, balon, Date.now(), frame.width, frame.height);
         }
       } finally {
         // Obligatorio: sin dispose el pipeline de cámara se estanca.

@@ -1,11 +1,11 @@
 import type { ComponentType } from 'react';
 
-import type { Box } from './types';
+import type { Detecciones } from './hoopDetector';
 
 type PreviewProps = {
   activa: boolean;
   onListo?: (listo: boolean) => void;
-  onDeteccion?: (balon: Box | null, timestamp: number, ancho: number, alto: number) => void;
+  onDeteccion?: (det: Detecciones, timestamp: number, ancho: number, alto: number) => void;
 };
 
 /**

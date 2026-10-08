@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,10 +10,23 @@ import type { RootStackParamList } from '@/navigation/types';
 import { colors, radius, sizes, spacing } from '@/theme';
 import { COURT_ZONES } from '@/types/court';
 
-import { getCameraPreview } from '../vision/cameraModule';
-import { aroDesdeToque, frameAVista, PROPORCION_ARO, type Punto, type Tamano } from '../vision/geometria';
-import { CONFIG_AUTO, detectorDisponible } from '../vision/hoopDetector';
 import type { Box } from '../vision/types';
+import { acumularAro, crearEstadoAroEstable, type EstadoAroEstable } from '../vision/aroEstable';
+import { getCameraPreview } from '../vision/cameraModule';
+import {
+  aroDesdeToque,
+  frameAVista,
+  PROPORCION_ARO,
+  type Punto,
+  type Tamano,
+} from '../vision/geometria';
+import {
+  configAuto,
+  detectorDisponible,
+  perfilActivo,
+  PERFIL_COCO,
+  type Detecciones,
+} from '../vision/hoopDetector';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 type Ruta = RouteProp<RootStackParamList, 'Calibracion'>;
@@ -49,18 +62,69 @@ export function CalibrationScreen() {
   const [anchoAro, setAnchoAro] = useState(ANCHO_ARO_INICIAL);
   const [balon, setBalon] = useState<Punto | null>(null);
 
+  const estadoAro = useRef<EstadoAroEstable>(crearEstadoAroEstable());
+  const [aroPropuesto, setAroPropuesto] = useState<Box | null>(null);
+  const [aroConfirmado, setAroConfirmado] = useState<Box | null>(null);
+  const ultimoEstable = useRef<Box | null>(null);
+  const mostrado = useRef<Box | null>(null);
+  const congelado = useRef(false);
+
   const puedeDetectar = CameraPreview != null && detectorDisponible();
-  const aro = toque && vista && frame ? aroDesdeToque(toque, anchoAro, vista, frame) : null;
+  // El toque manual siempre gana sobre el aro confirmado.
+  const aroToque = toque && vista && frame ? aroDesdeToque(toque, anchoAro, vista, frame) : null;
+  const aro = toque ? aroToque : aroConfirmado;
+  const aroSugerido = toque ? null : (aroConfirmado ?? aroPropuesto);
+  const aroSugeridoVista =
+    aroSugerido && vista && frame
+      ? (() => {
+          const a = frameAVista({ x: aroSugerido.x, y: aroSugerido.y }, vista, frame);
+          const b = frameAVista(
+            {
+              x: aroSugerido.x + aroSugerido.width,
+              y: aroSugerido.y + aroSugerido.height,
+            },
+            vista,
+            frame,
+          );
+          return { left: a.x, top: a.y, width: b.x - a.x, height: b.y - a.y };
+        })()
+      : null;
+  const claseAroActiva = perfilActivo()?.claseAro != null;
 
   const modo: 'auto' | 'manual' = puedeDetectar && camaraLista && aro ? 'auto' : 'manual';
 
-  const onDeteccion = useCallback((caja: Box | null, _ts: number, ancho: number, alto: number) => {
+  congelado.current = toque != null || aroConfirmado != null;
+
+  const onDeteccion = useCallback((det: Detecciones, _ts: number, ancho: number, alto: number) => {
+    if (!congelado.current) {
+      const r = acumularAro(estadoAro.current, det.aro);
+      estadoAro.current = r.estado;
+      ultimoEstable.current = r.estable;
+      const e = r.estable;
+      const m = mostrado.current;
+      const cambia =
+        (m == null) !== (e == null) ||
+        (m != null &&
+          e != null &&
+          Math.hypot(
+            e.x + e.width / 2 - (m.x + m.width / 2),
+            e.y + e.height / 2 - (m.y + m.height / 2),
+          ) >
+            0.05 * m.width);
+      if (cambia) {
+        mostrado.current = e;
+        setAroPropuesto(e);
+      }
+    }
+    const caja = det.balon;
     setFrame((previo) =>
-      previo && previo.width === ancho && previo.height === alto ? previo : { width: ancho, height: alto },
+      previo && previo.width === ancho && previo.height === alto
+        ? previo
+        : { width: ancho, height: alto },
     );
     // Feedback de que el modelo ve el balón: un punto sobre él.
     setBalon(
-      caja && caja.score >= CONFIG_AUTO.scoreMinimo
+      caja && caja.score >= configAuto(perfilActivo() ?? PERFIL_COCO).scoreMinimo
         ? { x: caja.x + caja.width / 2, y: caja.y + caja.height / 2 }
         : null,
     );
@@ -103,7 +167,12 @@ export function CalibrationScreen() {
             accessibilityRole="button"
             accessibilityLabel="Marcar el aro"
             style={styles.capaToque}
-            onPress={(e) => setToque({ x: e.nativeEvent.locationX, y: e.nativeEvent.locationY })}
+            onPress={(e) =>
+              setToque({
+                x: e.nativeEvent.locationX,
+                y: e.nativeEvent.locationY,
+              })
+            }
           >
             {toque ? (
               <View
@@ -118,11 +187,21 @@ export function CalibrationScreen() {
                   },
                 ]}
               />
+            ) : aroSugeridoVista ? (
+              <View
+                pointerEvents="none"
+                style={[
+                  styles.anillo,
+                  { borderColor: colors.primaryContainer, ...aroSugeridoVista },
+                ]}
+              />
             ) : (
               <View pointerEvents="none" style={styles.guia}>
                 <MaterialIcons name="touch-app" size={40} color={colors.primary} />
                 <AppText variant="labelCaps" color={colors.primary} center style={styles.textoGuia}>
-                  Toca el aro en la pantalla
+                  {claseAroActiva
+                    ? 'Apunta al aro… o tócalo en la pantalla.'
+                    : 'Toca el aro en la pantalla'}
                 </AppText>
               </View>
             )}
@@ -173,6 +252,19 @@ export function CalibrationScreen() {
                 : 'Modo manual: marcarás canasta o fallo con un toque.'}
           </AppText>
         </View>
+
+        {aroPropuesto && !toque && !aroConfirmado ? (
+          <>
+            <AppText variant="bodySm" color={colors.primaryContainer} center>
+              Aro detectado. Confírmalo o tócalo para ajustarlo.
+            </AppText>
+            <Button
+              label="Confirmar aro"
+              icono="check"
+              onPress={() => setAroConfirmado(ultimoEstable.current ?? aroPropuesto)}
+            />
+          </>
+        ) : null}
 
         <Button
           label="Comenzar a grabar"
