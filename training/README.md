@@ -1,6 +1,6 @@
 # Entrenamiento de hoop-ball.tflite
 
-Entrena el detector de aro y balon (EfficientDet-Lite0, int8, menos de 5 MB) en Google Colab.
+Entrena el detector de aro y balon (MobileNetV2 320x320, int8 con QAT, menos de 5 MB) en Google Colab.
 
 ## Pasos
 
