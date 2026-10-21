@@ -1,21 +1,20 @@
 import type { Frame } from 'react-native-vision-camera';
 
 import { DEFAULT_CONFIG, type ReducerConfig } from './shotEventReducer';
+import { ANCHORS_HOOP_BALL, type ConfigAnchorsSsd } from './ssdCrudo';
 import type { Box, FrameDetection } from './types';
 
 /**
  * Puente entre el modelo de visión y el resto de la app.
  *
- * ESTADO ACTUAL (Fase 2, camino A)
- * --------------------------------
- * - El BALÓN lo detecta un modelo genérico ya entrenado: SSD-MobileNet v1
- *   cuantizado sobre COCO (`assets/models/balon-coco.tflite`), clase
- *   "sports ball". No hay que entrenar nada.
- * - El ARO no se detecta: el usuario lo marca con un toque en la pantalla de
- *   calibración. El aro no se mueve durante la sesión, así que una posición
- *   fija es tan buena como una detección y bastante más estable.
+ * ESTADO ACTUAL (camino B)
+ * ------------------------
+ * - Modelo propio `assets/models/hoop-ball.tflite` (MobileNet-MultiAVG 384x384
+ *   de MediaPipe Model Maker, float16) que detecta ARO y BALÓN. La calibración
+ *   propone el aro detectado y el usuario lo confirma o lo corrige con un toque.
+ * - Respaldo: SSD-MobileNet v1 de COCO (`balon-coco.tflite`), solo balón; el
+ *   aro se marca a mano. Se usa si el modelo propio no está en el bundle.
  *
- * Camino B (en curso): modelo propio `hoop-ball.tflite` con las dos clases.
  * Cada modelo se describe con un `PerfilModelo`; ni el reductor ni la UI se
  * enteran de cuál está activo.
  *
@@ -46,9 +45,19 @@ export interface PerfilModelo {
    * en el aire; con 0.4 se perdían demasiados frames.
    */
   scoreMinimo: number;
-  /** Posición de cada tensor en la salida de runSync. */
-  salidas: { cajas: number; clases: number; scores: number };
+  /** Formato y posición de cada tensor en la salida de runSync. */
+  salidas: SalidasModelo;
 }
+
+/**
+ * - `postprocesado`: el .tflite incluye el postprocesado de detección (cajas
+ *   `[ymin, xmin, ymax, xmax]`, clases y scores ya filtrados). Ver `parseOutput`.
+ * - `crudo`: cajas codificadas y un score por clase para cada anchor, sin NMS
+ *   (exportación de MediaPipe Model Maker). Ver `parseOutputCrudo`.
+ */
+export type SalidasModelo =
+  | { formato: 'postprocesado'; cajas: number; clases: number; scores: number }
+  | { formato: 'crudo'; cajas: number; scores: number; numClases: number; anchors: ConfigAnchorsSsd };
 
 /** SSD-MobileNet v1 de COCO: 300x300, "sports ball" es el índice 36. Sin aro. */
 export const PERFIL_COCO: PerfilModelo = {
@@ -57,17 +66,21 @@ export const PERFIL_COCO: PerfilModelo = {
   claseAro: null,
   claseBalon: 36,
   scoreMinimo: 0.3,
-  salidas: { cajas: 0, clases: 1, scores: 2 },
+  salidas: { formato: 'postprocesado', cajas: 0, clases: 1, scores: 2 },
 };
 
-/** Modelo propio aro + balón. Valores provisionales: la Task 6 los fija. */
+/**
+ * Modelo propio aro + balón. Valores leídos del .tflite exportado: entrada
+ * float32 384x384 normalizada a [-1, 1]; salida 0 = cajas [1, 27621, 4],
+ * salida 1 = scores [1, 27621, 3] con etiquetas `background, aro, balon`.
+ */
 export const PERFIL_HOOP_BALL: PerfilModelo = {
   nombre: 'hoop-ball',
-  inputSize: 320,
+  inputSize: 384,
   claseAro: 1,
   claseBalon: 2,
   scoreMinimo: 0.4,
-  salidas: { cajas: 0, clases: 1, scores: 2 },
+  salidas: { formato: 'crudo', cajas: 0, scores: 1, numClases: 3, anchors: ANCHORS_HOOP_BALL },
 };
 
 export interface ModeloEmpaquetado {
@@ -77,13 +90,18 @@ export interface ModeloEmpaquetado {
 }
 
 /**
- * Carga del modelo. Se hace con require() dentro de try/catch a propósito:
- * si el .tflite no está en el bundle, la app debe seguir abriendo.
- *
- * Aún no se hace require de `hoop-ball.tflite`: Metro resuelve los require al
- * empaquetar y un archivo inexistente rompería el bundle aunque haya try/catch.
+ * Carga del modelo: el propio si está, y si no el de COCO. Se hace con
+ * require() dentro de try/catch a propósito: si el .tflite no está en el
+ * bundle, la app debe seguir abriendo.
  */
 export function cargarModeloEmpaquetado(): ModeloEmpaquetado | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const asset = require('../../../../assets/models/hoop-ball.tflite') as number;
+    return { asset, perfil: PERFIL_HOOP_BALL };
+  } catch {
+    // sigue con el respaldo
+  }
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const asset = require('../../../../assets/models/balon-coco.tflite') as number;

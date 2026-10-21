@@ -20,6 +20,7 @@ import {
   prepareInput,
   type Detecciones,
 } from './hoopDetector';
+import { parseOutputCrudo } from './ssdCrudo';
 import type { Box } from './types';
 
 /**
@@ -59,9 +60,9 @@ export function CameraPreview({ activa, onListo, onDeteccion }: CameraPreviewPro
   const device = useCameraDevice('back');
   const [pidiendo, setPidiendo] = useState(false);
 
-  // CPU (XNNPACK) a propósito: el modelo cuantizado int8 va de sobra rápido a
-  // 300x300 y los delegados GPU/NNAPI fallan con ops cuantizadas en muchos
-  // Android de gama media.
+  // CPU (XNNPACK) a propósito: los delegados GPU/NNAPI fallan con algunas ops
+  // en muchos Android de gama media. Si el modelo propio (384x384, float16) va
+  // lento en la prueba de campo, el delegado GPU es lo primero a probar.
   const empaquetado = cargarModeloEmpaquetado();
   const perfil = empaquetado?.perfil ?? PERFIL_COCO;
   const detector = useTensorflowModel(empaquetado?.asset ?? 0, []);
@@ -98,12 +99,24 @@ export function CameraPreview({ activa, onListo, onDeteccion }: CameraPreviewPro
           let balon: Box | null = null;
           if (entrada) {
             const salida = modelo.runSync([entrada]);
-            const { cajas, clases, scores } = perfil.salidas;
-            if (salida.length > Math.max(cajas, clases, scores)) {
+            const s = perfil.salidas;
+            if (s.formato === 'crudo') {
+              if (salida.length > Math.max(s.cajas, s.scores)) {
+                const det = parseOutputCrudo(
+                  new Float32Array(salida[s.cajas]!),
+                  new Float32Array(salida[s.scores]!),
+                  s.numClases,
+                  s.anchors,
+                  perfil,
+                );
+                aro = det.aro;
+                balon = det.balon;
+              }
+            } else if (salida.length > Math.max(s.cajas, s.clases, s.scores)) {
               const det = parseOutput(
-                new Float32Array(salida[cajas]!),
-                new Float32Array(salida[clases]!),
-                new Float32Array(salida[scores]!),
+                new Float32Array(salida[s.cajas]!),
+                new Float32Array(salida[s.clases]!),
+                new Float32Array(salida[s.scores]!),
                 perfil,
               );
               aro = det.aro;
